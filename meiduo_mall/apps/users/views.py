@@ -1,4 +1,7 @@
-from django.contrib.auth import login
+import json
+
+from django.contrib.auth import login, logout
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpResponseBadRequest
 from django.http import JsonResponse
 from django.shortcuts import render, redirect
@@ -10,6 +13,7 @@ from django.views import View
 from django_redis import get_redis_connection
 
 from apps.users.models import User
+from utils.response_code import RETCODE
 
 
 class RegisterView(View):
@@ -113,6 +117,64 @@ class LoginView(View):
         response.set_cookie('username',user.username,max_age=3600*24*14)
 
         return response
+
+class LogoutView(View):
+
+    def get(self,request):
+
+        logout(request)
+
+        response = redirect(reverse('contents:index'))
+
+        response.delete_cookie('username')
+
+        return response
+class UserCenterInfoView(LoginRequiredMixin,View):
+
+    def get(self,request):
+        context = {
+            'username':request.user.username,
+            'mobile':request.user.mobile,
+            'email':request.user.email,
+            'email_active':request.user.email_active,
+        }
+
+        return render(request,'user_center_info.html',context=context)
+
+class EmailView(View):
+
+    def put(self,request):
+
+        data = json.loads(request.body.decode())
+        email = data.get('email')
+        if not re.match(r'^[a-z0-9][\w\.\-]*@[a-z0-9\-]+(\.[a-z]{2,5}){1,2}$',email):
+            return JsonResponse({{'code':RETCODE.PARAMERR,'errmsg':'邮箱不符合规则'}})
+        request.user.email = email
+        request.user.save()
+        from django.core.mail import send_mail
+
+        #subject, message, from_email, recipient_list,
+        #subject        主题
+        subject='美多商场激活邮件'
+        #message,       内容
+        message=''
+        #from_email,  谁发的
+        from_email = '欢乐玩家<qi_rui_hua@163.com>'
+        #recipient_list,  收件人列表
+        recipient_list = ['chen570386336@163.com']
+
+        html_mesage="<a href='http://www.huyouni.com'>戳我有惊喜</a>"
+
+        send_mail(subject=subject,
+                  message=message,
+                  from_email=from_email,
+                  recipient_list=recipient_list,
+                  html_message=html_mesage)
+
+
+
+        # ⑤ 返回相应
+        return JsonResponse({'code':RETCODE.OK,'errmsg':'ok'})
 
 
 
