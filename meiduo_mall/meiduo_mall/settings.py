@@ -228,3 +228,5 @@ EMAIL_HOST_USER = 'QIAN190554022@163.com'
 #在邮箱中设置的客户端授权密码
 EMAIL_HOST_PASSWORD = '123456abc'
 
+DEFAULT_FILE_STORAGE = 'utils.storage.MyStorage'
+
