@@ -275,17 +275,12 @@
 			<div class="new_goods">
 				<h3>热销排行</h3>
 				<ul>
-					<li>
-						<a href="../static/detail.html"><img src="../static/images/goods/goods001.jpg"></a>
-						<h4><a href="#">360手机 N6 Pro 全网通 6GB+128GB 极夜黑</a></h4>
-						<div class="price">￥3.90</div>
-					</li>
-					<li>
-						<a href="../static/detail.html"><img src="../static/images/goods/goods002.jpg"></a>
-						<h4><a href="#">360手机 N6 Pro 全网通 6GB+128GB 极夜黑</a></h4>
-						<div class="price">￥16.80</div>
-					</li>
-				</ul>
+        <li v-for="sku in hots">
+            <a :href="sku.url"><img :src="sku.default_image_url"></a>
+            <h4><a :href="sku.url">[[ sku.name ]]</a></h4>
+            <div class="price">￥[[ sku.price ]]</div>
+        </li>
+    </ul>
 			</div>
 		</div>
 
@@ -329,6 +324,9 @@
 		<p>电话：010-****888    京ICP备*******8号</p>
 	</div>
 	</div>
+    <script type="text/javascript">
+        let category_id={{ category.id }}
+    </script>
 	<script type="text/javascript" src="{{ static('js/host.js') }}"></script>
 	<script type="text/javascript" src="{{ static('js/common.js') }}"></script>
 	<script type="text/javascript" src="{{ static('js/list.js') }}"></script>
