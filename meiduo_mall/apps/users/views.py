@@ -127,6 +127,8 @@ class LoginView(View):
 
         #设置cookie
         response.set_cookie('username',user.username,max_age=3600*24*14)
+        from apps.carts.utils import merge_cookie_to_redis
+        response=merge_cookie_to_redis(request,user,response)
 
         return response
 
