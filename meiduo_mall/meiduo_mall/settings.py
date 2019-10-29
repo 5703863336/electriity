@@ -42,6 +42,16 @@ INSTALLED_APPS = [
     'apps.areas',
     'apps.contents',
     'apps.goods',
+    'apps.orders',
+    'apps.payment',
+    'django_crontab',
+]
+CRONJOBS = [
+    # 每1分钟生成一次首页静态文件
+    # 参数1:  定时任务的频次
+    # 参数2:  定时任务,所谓的定时任务就是函数
+    # 参数3:  日志
+    ('*/1 * * * *', 'apps.contents.crons.generate_static_index_html', '>> ' + os.path.join(BASE_DIR, 'logs/crontab.log'))
 ]
 
 MIDDLEWARE = [
@@ -243,4 +253,11 @@ EMAIL_HOST_USER = 'QIAN190554022@163.com'
 EMAIL_HOST_PASSWORD = '123456abc'
 
 DEFAULT_FILE_STORAGE = 'utils.storage.MyStorage'
+
+ALIPAY_APPID = '2016101600702903'
+ALIPAY_DEBUG = True
+ALIPAY_URL = 'https://openapi.alipaydev.com/gateway.do'
+ALIPAY_RETURN_URL = 'http://www.meiduo.site:8000/payment/status/'
+APP_PRIVATE_KEY_PATH = os.path.join(BASE_DIR, 'apps/payment/keys/app_private_key.pem')
+ALIPAY_PUBLIC_KEY_PATH = os.path.join(BASE_DIR, 'apps/payment/keys/alipay_public_key.pem')
 

@@ -1,3 +1,5 @@
+import json
+
 from django.http import HttpResponse,HttpResponseBadRequest
 from django.http import JsonResponse
 from django.shortcuts import render
@@ -5,6 +7,8 @@ from random import randint
 
 # Create your views here.
 from django.views import View
+
+from apps.users.utils import check_access_token_token
 from libs.captcha.captcha import captcha
 from django_redis import get_redis_connection
 
@@ -49,6 +53,27 @@ class SmsCodeView(View):
         send_sms_code.delay(mobile, sms_code)
 
         return JsonResponse({'msg': 'ok', 'code': '0'})
+class FindPasswordSms(View):
+
+    def get(self,request):
+        data = request.GET
+        token = data.get('access_token')
+        access_token = check_access_token_token(token)
+        mobile = access_token['mobile']
+
+        redis_conn = get_redis_connection('code')
+        if redis_conn.get('send_findflag_%s'%mobile):
+            return HttpResponseBadRequest('短信发送太频繁')
+        sms_find_code = '%06d' % randint(0, 999999)
+        redis_conn.setex('find_sms_%s'%mobile,300,sms_find_code)
+        redis_conn.setex('send_findflag_%s'%mobile,60,1)
+        from celery_tasks.sms.tasks import send_sms_code
+        send_sms_code(mobile,sms_find_code)
+
+        return JsonResponse({'msg': 'ok', 'code': '0'})
+
+
+
 class CodeView(View):
     def get(self,request,mobile):
         data = request.GET

@@ -22,4 +22,9 @@ urlpatterns = [
     url(r'^addresses/(?P<address_id>\d+)/title/$',views.UpdateTitleView.as_view(),name='updateaddressTitle'),
     url(r'^changepwd/$', views.ChangePassword.as_view(), name='changepwd'),
     url(r'^browse_histories/$', views.UserHistoryView.as_view(), name='history'),
+    url(r'^find_password/$', views.FindPasswordView.as_view(), name='findpassword'),
+    url(r'^accounts/(?P<username>[a-zA-Z0-9_-]{5,20})/sms/token/$', views.Form_1_On_Submit.as_view(), name='findpassword1'),
+    url(r'^accounts/(?P<username>[a-zA-Z0-9_-]{5,20})/password/token/$', views.Form_2_On_Submit.as_view(), name='findpassword2'),
+    url(r'users/(?P<userid>\d+)/password/$', views.FindChangePasswordView.as_view(), name='findpassword3'),
+
 ]

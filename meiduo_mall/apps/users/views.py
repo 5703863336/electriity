@@ -1,7 +1,8 @@
 import json
 
-from django.contrib.auth import login, logout
+from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.http import HttpResponse
 from django.http import HttpResponseBadRequest
 from django.http import JsonResponse
 from django.shortcuts import render, redirect
@@ -19,7 +20,7 @@ from django_redis import get_redis_connection
 
 from apps.areas.models import Area
 from apps.users.models import User, Address
-from apps.users.utils import check_active_token
+from apps.users.utils import check_active_token, generic_access_token_url
 from utils.response_code import RETCODE
 
 
@@ -40,14 +41,13 @@ class RegisterView(View):
             return HttpResponseBadRequest('参数不全')
         if not re.match(r'[a-zA-Z0-9]{5,20}',username):
             return HttpResponseBadRequest('用户名不满足条件')
-                #判断用户名是否重复
-        # 2.3 密码是否符合规则
+
         if not re.match(r'[a-zA-Z0-9]{8,20}',password):
             return HttpResponseBadRequest('密码不符合规则')
-        # 2.4 确认密码和密码一致
+
         if password2 != password:
             return HttpResponseBadRequest('密码不一致')
-        # 2.5 判断手机号 是否符合规则
+
         if not re.match(r'^1[3-9]\d{9}$',mobile):
             return HttpResponseBadRequest('手机号错误')
         redis_conn  = get_redis_connection('code')
@@ -474,6 +474,82 @@ class UserHistoryView(LoginRequiredMixin,View):
             })
 
         return JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK', 'skus': skus})
+class FindPasswordView(View):
+
+    def get(self,request):
+
+        return render(request,'find_password.html')
+
+class Form_1_On_Submit(View):
+
+    def get(self, request, username, user=None):
+
+        data = request.GET
+        text = data.get('text')
+        image_code_id = data.get('image_code_id')
+        if not all([text]):
+
+            return HttpResponseBadRequest('参数不全')
+        try:
+            user = User.objects.get(username=username)
+        except User.DoesNotExist:
+            return HttpResponseBadRequest('用户不存在')
+        redis_conn = get_redis_connection('code')
+        check_code = redis_conn.get('img_%s'%image_code_id).decode()
+
+        if check_code.lower() != text.lower():
+
+            return HttpResponseBadRequest('图片验证码错误')
+        mobile = user.mobile
+        access_token = generic_access_token_url(user.username,user.mobile)
+
+        return JsonResponse({'mobile':mobile,'access_token':access_token})
+
+class Form_2_On_Submit(View):
+
+    def get(self,request,username):
+
+        sms_code = request.GET.get('sms_code')
+        try:
+            user = User.objects.get(username=username)
+            mobile = user.mobile
+        except User.DoesNotExist:
+            return HttpResponseBadRequest('用户不存在')
+
+
+        redis_conn = get_redis_connection('code')
+
+        code = redis_conn.get('find_sms_%s'%mobile)
+        if int(sms_code) != int(code):
+
+            return HttpResponseBadRequest('验证码错误')
+        access_token = generic_access_token_url(user.username, user.mobile)
+        return JsonResponse({
+            'user_id': user.id,
+            'access_token': access_token,
+        })
+class FindChangePasswordView(View):
+
+    def post(self,request,userid):
+
+        data = json.loads(request.body.decode())
+        new_password = data.get('password')
+        re_password = data.get('password2')
+        access_token = data.get('access_token')
+        if new_password != re_password:
+
+            return HttpResponseBadRequest('输入不一致')
+        try:
+            user = User.objects.get(id=userid)
+            user.set_password(new_password)
+            user.save()
+        except Exception:
+            return HttpResponseBadRequest('失败')
+
+        return JsonResponse({'message':'ok'})
+
+
+
 
 
 

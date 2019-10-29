@@ -43,4 +43,27 @@ def check_active_token(token):
     else:
         return data
 
+def generic_access_token_url(username,mobile):
+
+    s = Serializer(secret_key=settings.SECRET_KEY,expires_in=3600)
+
+    data = {
+        'username':username,
+        'mobile':mobile,
+    }
+
+    serect_data = s.dumps(data)
+    return serect_data.decode()
+
+def check_access_token_token(token):
+
+    s = Serializer(secret_key=settings.SECRET_KEY,expires_in=3600)
+    try:
+        data = s.loads(token)
+    except BadData:
+        return None
+    else:
+        return data
+
+
 
